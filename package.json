@@ -1,0 +1,46 @@
+{
+  "name": "arbiter-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Instrumented benchmark suite scientifically validating Arbiter multi-agent orchestration, Waymark continuity, and fail-closed conflict quarantine.",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "bin": {
+    "arbiter-benchmark": "./dist/src/cli/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paragon-ux/arbiter-benchmark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/paragon-ux/arbiter-benchmark/issues"
+  },
+  "homepage": "https://github.com/paragon-ux/arbiter-benchmark#readme",
+  "license": "MIT",
+  "keywords": [
+    "benchmark",
+    "multi-agent",
+    "orchestration",
+    "arbiter",
+    "waymark",
+    "git-worktrees",
+    "agent-continuity",
+    "sqlite",
+    "zero-dependencies"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"dist/test/**/*.test.js\"",
+    "test:coverage": "npm run build && node --test --experimental-test-coverage \"dist/test/**/*.test.js\"",
+    "public-check": "node scripts/public-check.mjs",
+    "benchmark": "npm run build && node dist/src/cli/index.js --all",
+    "verify": "npm run build && node --test \"dist/test/**/*.test.js\" && node scripts/public-check.mjs && npm run benchmark"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  }
+}
