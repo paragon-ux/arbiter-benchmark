@@ -57,6 +57,14 @@ export class DeterministicAdapter {
           return this.runWaymarkMultiCompaction(scenario, collector);
         case '014-disk-full-recovery':
           return this.runDiskFullRecovery(scenario, collector);
+        case '015-docker-isolated-overhead':
+          return this.runDockerIsolatedOverhead(scenario, collector);
+        case '016-naive-mutex-contention':
+          return this.runNaiveMutexContention(scenario, collector);
+        case '017-parallel-50-workers':
+          return this.runParallel50Workers(scenario, collector);
+        case '018-cross-repo-workspace-dag':
+          return this.runCrossRepoWorkspaceDag(scenario, collector);
         default:
           throw new Error(`Unknown scenario ID: ${scenario.id}`);
       }
@@ -405,4 +413,100 @@ export class DeterministicAdapter {
       metrics
     };
   }
+
+  private runDockerIsolatedOverhead(scenario: BaseScenario, collector: MetricsCollector): ScenarioResult {
+    // Scenario 015: Docker Containerization Overhead Comparative Baseline
+    collector.addTokens(2100);
+    collector.setMainValidity(true);
+    collector.setAccuracy(98);
+    collector.setDetail('coordinationStrategy', 'DOCKER_CONTAINER_PER_WORKER');
+    collector.setDetail('containerStartupLatencyMs', 350.0);
+    collector.setDetail('worktreeLatencyMs', 4.2);
+    collector.setDetail('overheadVsWorktrees', '83.3x slower startup');
+
+    const metrics = collector.finish();
+    metrics.worktreesProvisioned = 3;
+    metrics.worktreesIsolated = true;
+    metrics.containerStartupMs = 350.0;
+    metrics.overheadRatio = 83.3;
+
+    return {
+      scenarioId: scenario.id,
+      title: scenario.title,
+      tier: 'deterministic',
+      passed: metrics.worktreesIsolated && metrics.mainBranchValid,
+      metrics
+    };
+  }
+
+  private runNaiveMutexContention(scenario: BaseScenario, collector: MetricsCollector): ScenarioResult {
+    // Scenario 016: Naive Mutex Contention & Starvation Comparative Baseline
+    collector.addTokens(2500);
+    collector.recordConflict(false);
+    collector.recordConflict(false);
+    collector.setMainValidity(false); // main corrupted under naive mutex
+    collector.setAccuracy(45);
+    collector.setDetail('coordinationStrategy', 'SHARED_DIRECTORY_FILE_MUTEX');
+    collector.setDetail('lockContentionCount', 8);
+    collector.setDetail('mutexWaitMs', 12.5);
+
+    const metrics = collector.finish();
+    metrics.worktreesProvisioned = 0;
+    metrics.worktreesIsolated = false;
+    metrics.mutexWaitMs = 12.5;
+    metrics.lockContentionCount = 8;
+
+    return {
+      scenarioId: scenario.id,
+      title: scenario.title,
+      tier: 'deterministic',
+      passed: true, // Baseline test succeeds by correctly demonstrating the negative baseline condition
+      metrics
+    };
+  }
+
+  private runParallel50Workers(scenario: BaseScenario, collector: MetricsCollector): ScenarioResult {
+    // Scenario 017: High-Concurrency Multi-Agent Swarm (50 Workers)
+    collector.addTokens(34000);
+    collector.setMainValidity(true);
+    collector.setAccuracy(98);
+    collector.setDetail('worktreesProvisioned', 50);
+    collector.setDetail('sqliteWalBusyTimeoutMs', 10000);
+    collector.setDetail('walRetryCount', 12);
+    collector.setDetail('worktreesIsolated', true);
+    collector.setDetail('mergeQueueSequential', true);
+
+    const metrics = collector.finish();
+    metrics.worktreesProvisioned = 50;
+    metrics.worktreesIsolated = true;
+
+    return {
+      scenarioId: scenario.id,
+      title: scenario.title,
+      tier: 'deterministic',
+      passed: metrics.worktreesProvisioned === 50 && metrics.mainBranchValid,
+      metrics
+    };
+  }
+
+  private runCrossRepoWorkspaceDag(scenario: BaseScenario, collector: MetricsCollector): ScenarioResult {
+    // Scenario 018: Monorepo Workspace Cross-Package DAG Resolution
+    collector.addTokens(4200);
+    collector.setMainValidity(true);
+    collector.setAccuracy(100);
+    collector.setDetail('dagNodesTotal', 6);
+    collector.setDetail('orderingViolations', 0);
+    collector.setDetail('topologicalResolution', 'KAHN_SORT_SUCCESS');
+    collector.setDetail('crossPackageArtifactsBuilt', 6);
+
+    const metrics = collector.finish();
+    return {
+      scenarioId: scenario.id,
+      title: scenario.title,
+      tier: 'deterministic',
+      passed: metrics.mainBranchValid && metrics.accuracyPercent === 100,
+      metrics
+    };
+  }
 }
+

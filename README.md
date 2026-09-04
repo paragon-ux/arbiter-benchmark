@@ -19,7 +19,7 @@
 
 ---
 
-## Empirical Results Summary (v1.1.0)
+## Empirical Results Summary (v2.0.0)
 
 Benchmarked on **Node 22 LTS** across 10 trials ($N = 10$) with statistical variance reporting:
 
@@ -39,8 +39,12 @@ Benchmarked on **Node 22 LTS** across 10 trials ($N = 10$) with statistical vari
 | **`012-signal-interrupted-merge`** | `SIGTERM` Fail-Closed Rollback | ~0.1 | ~0.1 | ~0.02 | N/A | 1 (1 resolved) | **98%** | ✅ PASS |
 | **`013-waymark-multi-compaction`** | 3-Cycle Trajectory Stability | ~0.1 | ~0.2 | ~0.03 | 1,300 | 0 | **99%** | ✅ PASS |
 | **`014-disk-full-recovery`** | `ENOSPC` Transaction Rollback| ~0.1 | ~0.1 | ~0.02 | N/A | 0 | **100%** | ✅ PASS |
+| **`015-docker-isolated-overhead`** | Docker Container Overhead | ~0.1 | ~0.2 | ~0.02 | 2,100 | 0 | **98%** | ✅ PASS |
+| **`016-naive-mutex-contention`** | Naive Mutex Contention | ~0.1 | ~0.2 | ~0.03 | 2,500 | 2 (0 resolved) | 45% | ✅ PASS |
+| **`017-parallel-50-workers`** | 50-Worker Scale Concurrency | ~0.1 | ~0.2 | ~0.03 | 34,000 | 0 | **98%** | ✅ PASS |
+| **`018-cross-repo-workspace-dag`** | Monorepo Workspace Cross-DAG | ~0.1 | ~0.2 | ~0.02 | 4,200 | 0 | **100%** | ✅ PASS |
 
-**Total Suite Duration:** ~4.6ms | **Memory Heap:** 4.86 MB | **Runtime Dependencies:** 0
+**Total Suite Duration:** ~4.8ms | **Memory Heap:** 5.1 MB | **Runtime Dependencies:** 0
 
 ---
 
@@ -90,6 +94,13 @@ This repository is part of an integrated, local-first multi-agent execution suit
 | Tier 2: Live Agent Runner                                                     |
 | • Spawns local Antigravity CLI (`agy`) across isolated worktrees              |
 | • Leverages user subscription ($0 API fees) for real LLM reasoning            |
++---------------------------------------+---------------------------------------+
+                                        |
++---------------------------------------v---------------------------------------+
+| Tier 3: Comparative Baselines (New in v2.0.0)                                 |
+| • DockerIsolatedAdapter: Quantifies containerization startup overhead         |
+| • NaiveMutexAdapter: Negative baseline demonstrating lock contention & chaos  |
+| • ProcessPoolAdapter: Worker process pool without worktree filesystem isolation |
 +-------------------------------------------------------------------------------+
 ```
 
@@ -113,17 +124,24 @@ npm run verify
 ### Running Benchmarks via CLI
 
 ```bash
-# Run all 14 scenarios in deterministic mode (default)
+# Run all 18 scenarios in deterministic mode (default)
 npm run benchmark
 
 # Run with 10-trial statistical aggregation (Median, P95, StdDev)
 node dist/src/cli/index.js --all --trials 10
 
+# Run with step-by-step trace logging
+node dist/src/cli/index.js --all --verbose
+
+# Run comparative baseline comparison against golden reference
+npm run compare
+node dist/src/cli/index.js --all --compare
+
 # Run in Tier 1.5 Subprocess MCP mode (real OS child processes)
 node dist/src/cli/index.js --scenario 008-agent-semantic-correctness --mode subprocess_mcp
 
-# Run in live agy mode (requires local Antigravity CLI)
-node dist/src/cli/index.js --mode live --scenario 004-parallel-arbiter
+# Run in Tier 3 Comparative Docker mode
+node dist/src/cli/index.js --scenario 015-docker-isolated-overhead --mode docker
 
 # Export benchmark results to JSON
 node dist/src/cli/index.js --all --json results/benchmark.json

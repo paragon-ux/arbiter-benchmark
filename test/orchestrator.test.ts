@@ -9,15 +9,17 @@ const __dirname = path.dirname(__filename);
 const scenariosDir = path.resolve(__dirname, '../../scenarios');
 
 describe('BenchmarkOrchestrator Suite', () => {
-  it('loads all 14 scenario files from scenarios directory', () => {
+  it('loads all 18 scenario files from scenarios directory', () => {
     const orchestrator = new BenchmarkOrchestrator();
     const scenarios = orchestrator.loadScenarios(scenariosDir);
-    assert.equal(scenarios.length, 14);
+    assert.equal(scenarios.length, 18);
     const ids = scenarios.map(s => s.id);
     assert.ok(ids.includes('001-single-agent-cold'));
     assert.ok(ids.includes('004-parallel-arbiter'));
     assert.ok(ids.includes('008-agent-semantic-correctness'));
     assert.ok(ids.includes('014-disk-full-recovery'));
+    assert.ok(ids.includes('015-docker-isolated-overhead'));
+    assert.ok(ids.includes('018-cross-repo-workspace-dag'));
   });
 
   it('filters scenarios by scenarioId when specified', () => {
@@ -32,12 +34,23 @@ describe('BenchmarkOrchestrator Suite', () => {
     const scenarios = orchestrator.loadScenarios(scenariosDir);
     const summary = await orchestrator.runSuite(scenarios, 'deterministic');
 
-    assert.equal(summary.totalScenarios, 14);
-    assert.equal(summary.passedScenarios, 14);
+    assert.equal(summary.totalScenarios, 18);
+    assert.equal(summary.passedScenarios, 18);
     assert.equal(summary.failedScenarios, 0);
     assert.ok(summary.totalDurationMs >= 0);
     assert.ok(summary.heapUsedMb > 0);
     assert.equal(summary.tier, 'deterministic');
+  });
+
+  it('executes Tier 3 comparative adapter via orchestrator', async () => {
+    const orchestrator = new BenchmarkOrchestrator();
+    const scenarios = orchestrator.loadScenarios(scenariosDir, '015-docker-isolated-overhead');
+    const summary = await orchestrator.runSuite(scenarios, 'docker');
+
+    assert.equal(summary.totalScenarios, 1);
+    assert.equal(summary.tier, 'docker');
+    assert.equal(summary.results[0].tier, 'docker');
+    assert.ok(summary.results[0].metrics.containerStartupMs! > 0);
   });
 
   it('executes multi-trial suite and aggregates statistical distributions', async () => {

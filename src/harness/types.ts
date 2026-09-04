@@ -1,4 +1,4 @@
-export type ExecutionTier = 'deterministic' | 'subprocess_mcp' | 'agy';
+export type ExecutionTier = 'deterministic' | 'subprocess_mcp' | 'agy' | 'naive_mutex' | 'process_pool' | 'docker';
 
 export interface BaseScenario {
   id: string;
@@ -22,6 +22,10 @@ export interface ScenarioMetrics {
   conflictsResolved: number;
   mainBranchValid: boolean;
   accuracyPercent: number;
+  containerStartupMs?: number;
+  mutexWaitMs?: number;
+  lockContentionCount?: number;
+  overheadRatio?: number;
   details: Record<string, unknown>;
 }
 

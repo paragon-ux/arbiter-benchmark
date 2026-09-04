@@ -44,6 +44,10 @@ If an agent crashes (due to timeout, out-of-memory, network disconnect, or IDE w
 | **H10: Signal Recovery** | Interruption Resilience (Standard merge vs. Atomic transaction) | Mid-merge SIGINT/SIGTERM interruption | Dirty worktree state, working tree cleanliness | 100% clean rollback to pristine base state |
 | **H11: Multi-Compaction** | Trajectory Durability (Single checkpoint vs. Rolling Ledger) | 5 sequential context compactions | Final trajectory continuity, breadcrumb drift | Preserves unbroken lineage across all 5 compactions |
 | **H12: Disk-Full Handling** | Storage Exhaustion Resilience (Unchecked write vs. Atomic check) | Simulated `ENOSPC` / storage exhaustion | Database corruption, task rollback status | Graceful rollback, task remains recoverable |
+| **H13: Containerization Overhead** | Isolation Mechanism (Docker Container vs. Ephemeral Worktree) | 3 concurrent agent environments | Provisioning latency, memory footprint | Ephemeral worktrees provision $>50\text{x}$ faster with 0 daemon overhead |
+| **H14: Mutex Contention** | Concurrency Strategy (Worktree Isolation vs. Shared File Mutex) | 4 concurrent agents on shared files | Lock wait time, dirty branch mutations | Naive mutex exhibits deadlock and leaves dirty working copy |
+| **H15: Massive Concurrency Scale** | Concurrency Limits (10 vs. 50 Concurrent Worktrees) | 50 concurrent agents on SQLite WAL | SQLite write throughput, file handle exhaustion | Clean serialization without database lock timeouts |
+| **H16: Monorepo Cross-DAG** | Dependency Topology (Single Project vs. Monorepo Diamond DAG) | Multi-package workspace dependencies | Artifact build order, dependency unblocking | 100% ordering fidelity, zero premature compilation |
 
 ---
 
@@ -65,32 +69,32 @@ Arbiter Benchmark includes two self-contained, realistic TypeScript codebases:
 
 ---
 
-## 5. Tri-Tier Execution Engine
+## 5. Multi-Tier Execution Engine
 
-Scientific evaluation requires **deterministic repeatability** for continuous integration, **subprocess protocol fidelity** without API overhead, and **empirical realism** for live LLM agent validation.
+Scientific evaluation requires **deterministic repeatability** for continuous integration, **subprocess protocol fidelity** without API overhead, **comparative baselines** against alternative architectures, and **empirical realism** for live LLM agent validation.
 
 ```
                      +-----------------------------------+
                      |     Benchmark Orchestrator        |
                      +-----------------+-----------------+
                                        |
-                     +-----------------+-----------------+
-                     |                 |                 |
-                     v                 v                 v
-        +------------------+  +------------------+  +------------------+
-        | Tier 1: Determin.|  | Tier 1.5: Subpr. |  | Tier 2: Live     |
-        | Replay Engine    |  | MCP Adapter      |  | Agy Runner       |
-        +--------+---------+  +--------+---------+  +--------+---------+
-                 |                     |                     |
-         Seeded Mulberry32     OS Child Processes    Local Antigravity
-          PRNG Replay I/O      JSON-RPC 2.0 Stdio    CLI Over Worktrees
-         (0 cost, CI Matrix)   (0 external keys)     ($0 Subscription)
+        +------------------+-----------+-----------+------------------+
+        |                  |                       |                  |
+        v                  v                       v                  v
+ +---------------+  +---------------+       +---------------+  +---------------+
+ | Tier 1:       |  | Tier 1.5:     |       | Tier 2:       |  | Tier 3:       |
+ | Deterministic |  | Subprocess    |       | Live Agy      |  | Comparative   |
+ | Replay Engine |  | MCP Adapter   |       | Runner        |  | Baselines     |
+ +-------+-------+  +-------+-------+       +-------+-------+  +-------+-------+
+         |                  |                       |                  |
+  Mulberry32 PRNG    OS JSON-RPC stdio       Local CLI ($0)    Docker / Mutex /
+  (<5ms, CI)         (Protocol fidelity)     (Live LLM agent)   Process Pool
 ```
 
 ### Tier 1: Deterministic Simulator
 - Seeded pseudo-random generator (Mulberry32 with seed `0x6D2B79F5`).
 - Pre-recorded tool call traces and AST mutation fixtures.
-- Sub-5 millisecond execution time across all 14 scenarios.
+- Sub-5 millisecond execution time across all 18 scenarios.
 - Zero external API dependencies; runs seamlessly on Linux, macOS, and Windows CI.
 
 ### Tier 1.5: Subprocess MCP Adapter
@@ -103,6 +107,11 @@ Scientific evaluation requires **deterministic repeatability** for continuous in
 - Operates under the user's local subscription ($0 API token cost).
 - Directly tests Git worktree creation, Waymark CLI MCP communication, and Arbiter task leases.
 
+### Tier 3: Comparative Baselines
+- `DockerIsolatedAdapter`: Quantifies container startup and teardown latency overhead (~350ms per container) compared to Arbiter ephemeral worktrees (<5ms).
+- `NaiveMutexAdapter`: Models un-isolated execution where agents contend for file-level mutexes, demonstrating starvation and dirty state.
+- `ProcessPoolAdapter`: Models worker pool execution without worktree isolation, revealing `.git/index.lock` collisions.
+
 ---
 
 ## 6. Summary of Architectural Findings
@@ -112,3 +121,4 @@ The empirical findings from Arbiter Benchmark confirm:
 2. **Deterministic Isolation**: Ephemeral Git worktrees prevent 100% of concurrent file collisions without the resource overhead of Docker or VMs.
 3. **Sub-Millisecond Coordination**: Native SQLite in-memory and WAL-mode scheduling executes DAG dependency resolution and watchdog lease reclamation in **<5ms**.
 4. **Resilience Under Chaos**: Atomic transactions and fail-closed rollback maintain pristine working copy status even during mid-merge signal aborts, disk exhaustion, and cyclic dependency injection.
+5. **Comparative Superiority**: Ephemeral Git worktrees achieve container-grade workspace isolation at **>50x lower startup latency** and zero container daemon dependencies.

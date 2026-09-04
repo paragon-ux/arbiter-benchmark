@@ -9,9 +9,9 @@ const __dirname = path.dirname(__filename);
 const scenariosDir = path.resolve(__dirname, '../../scenarios');
 
 describe('Scenario Schema Validation Suite', () => {
-  it('verifies each of the 14 scenario JSON files has required schema properties', () => {
+  it('verifies each of the 18 scenario JSON files has required schema properties', () => {
     const files = fs.readdirSync(scenariosDir).filter(f => f.endsWith('.json'));
-    assert.equal(files.length, 14, `Expected 14 scenarios, found ${files.length}`);
+    assert.equal(files.length, 18, `Expected 18 scenarios, found ${files.length}`);
 
     for (const f of files) {
       const content = fs.readFileSync(path.join(scenariosDir, f), 'utf8');

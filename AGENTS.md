@@ -30,7 +30,7 @@ This repository is part of an integrated, local-first multi-agent execution suit
 
 ## Architecture & Scenarios
 
-The suite evaluates 14 standardized benchmark and resilience scenarios:
+The suite evaluates 18 standardized benchmark and resilience scenarios:
 
 1. `001-single-agent-cold`: Baseline cold exploration after context compaction (~7,120 tokens).
 2. `002-single-agent-waymark`: In-flight continuity resume (<216 tokens, >75% token reduction).
@@ -46,12 +46,20 @@ The suite evaluates 14 standardized benchmark and resilience scenarios:
 12. `012-signal-interrupted-merge`: Mid-merge SIGINT/SIGTERM interruption testing clean rollback to pristine state.
 13. `013-waymark-multi-compaction`: Durability of Waymark in-flight continuity across 5 successive compactions.
 14. `014-disk-full-recovery`: Graceful degradation and atomic rollback when storage limits or ENOSPC errors occur.
+15. `015-docker-isolated-overhead`: Containerization lifecycle overhead evaluation vs. lightweight ephemeral worktrees.
+16. `016-naive-mutex-contention`: Negative baseline showing deadlock, starvation, and dirty working tree state.
+17. `017-parallel-50-workers`: Massive concurrency scale stress test with 50 concurrent agent workers.
+18. `018-cross-repo-workspace-dag`: Complex multi-package monorepo diamond dependency resolution and artifact building.
 
-## Tri-Tier Execution Engine
+## Multi-Tier Execution Engine
 
 - **Tier 1 (Deterministic Replay Engine)**: Fast, seeded replay simulation via Mulberry32 PRNG with pre-recorded I/O fixtures ($0 cost, runs on GitHub Actions CI across Ubuntu, macOS, Windows in <5ms).
 - **Tier 1.5 (Subprocess MCP Adapter)**: Spawns real OS child processes communicating via JSON-RPC 2.0 stdio with mock MCP tool contracts, validating transport boundaries without external API keys.
 - **Tier 2 (Live Agy Runner)**: Invokes the local Antigravity CLI (`agy`) across isolated worktrees using user subscription ($0 API cost) for live empirical validation.
+- **Tier 3 (Comparative Baselines)**:
+  - `DockerIsolatedAdapter`: Measures containerized isolation overhead.
+  - `NaiveMutexAdapter`: Demonstrates negative baseline lock contention and file corruption.
+  - `ProcessPoolAdapter`: Evaluates worker pool execution without worktree isolation.
 
 ## Agent Workflow & Commands
 

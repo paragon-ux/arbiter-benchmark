@@ -232,4 +232,65 @@ describe('DeterministicAdapter Suite', () => {
     assert.equal(res.metrics.details.transactionRolledBack, true);
     assert.equal(res.metrics.details.orphanLocksRemaining, 0);
   });
+
+  it('simulates 015-docker-isolated-overhead measuring container spinup latency', async () => {
+    const res = await adapter.execute({
+      id: '015-docker-isolated-overhead',
+      title: 'Docker Overhead',
+      description: 'Test',
+      targetRepo: 'targets/microservice-auth',
+      mode: 'docker_comparative'
+    });
+
+    assert.ok(res.passed);
+    assert.equal(res.metrics.worktreesProvisioned, 3);
+    assert.equal(res.metrics.worktreesIsolated, true);
+    assert.ok(res.metrics.containerStartupMs! > 100);
+    assert.ok(res.metrics.overheadRatio! > 10);
+  });
+
+  it('simulates 016-naive-mutex-contention reporting lock contention and corrupted main', async () => {
+    const res = await adapter.execute({
+      id: '016-naive-mutex-contention',
+      title: 'Naive Mutex Contention',
+      description: 'Test',
+      targetRepo: 'targets/microservice-auth',
+      mode: 'naive_mutex_comparative'
+    });
+
+    assert.ok(res.passed);
+    assert.equal(res.metrics.worktreesIsolated, false);
+    assert.equal(res.metrics.mainBranchValid, false);
+    assert.equal(res.metrics.lockContentionCount, 8);
+  });
+
+  it('simulates 017-parallel-50-workers stressing SQLite WAL concurrency at scale', async () => {
+    const res = await adapter.execute({
+      id: '017-parallel-50-workers',
+      title: 'Parallel 50 Workers',
+      description: 'Test',
+      targetRepo: 'targets/microservice-auth',
+      mode: 'arbiter_swarm_50'
+    });
+
+    assert.ok(res.passed);
+    assert.equal(res.metrics.worktreesProvisioned, 50);
+    assert.equal(res.metrics.worktreesIsolated, true);
+    assert.equal(res.metrics.mainBranchValid, true);
+  });
+
+  it('simulates 018-cross-repo-workspace-dag resolving monorepo package order', async () => {
+    const res = await adapter.execute({
+      id: '018-cross-repo-workspace-dag',
+      title: 'Monorepo Workspace DAG',
+      description: 'Test',
+      targetRepo: 'targets/data-pipeline',
+      mode: 'monorepo_dag'
+    });
+
+    assert.ok(res.passed);
+    assert.equal(res.metrics.accuracyPercent, 100);
+    assert.equal(res.metrics.details.topologicalResolution, 'KAHN_SORT_SUCCESS');
+  });
 });
+

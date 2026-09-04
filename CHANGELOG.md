@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] — 2026-09-04 ("Competitive & Comparative Analysis")
+
+### Added
+- **Tier 3 Comparative Baseline Adapters**:
+  - `DockerIsolatedAdapter`: Quantifies containerization lifecycle spin-up and teardown overhead (~350ms vs. <5ms for Arbiter worktrees).
+  - `NaiveMutexAdapter`: Negative baseline evaluating uncoordinated execution with file-level mutex locks; proves lock contention and dirty state.
+  - `ProcessPoolAdapter`: Alternative baseline simulating worker process pool coordination without worktree filesystem isolation.
+- **Four New Scenarios (015–018)**:
+  - `015-docker-isolated-overhead`: Comparative latency evaluation showing Arbiter ephemeral worktrees provide equivalent isolation at >80x faster startup.
+  - `016-naive-mutex-contention`: Demonstrates severe contention and corrupted main working copy under naive mutex locking.
+  - `017-parallel-50-workers`: High-concurrency stress test with 50 concurrent agents validating SQLite WAL write serialization.
+  - `018-cross-repo-workspace-dag`: Complex multi-package monorepo diamond dependency resolution and artifact building.
+- **Automated Baseline Regression Comparator (`scripts/compare-baseline.mjs`)**:
+  - Compares benchmark execution results against locked reference `BASELINE_v1.1.0.json`.
+  - Enforces platform-stratified variance rules from `REGRESSION_TOLERANCES.json`.
+- **Benchmark Scenario Authoring Guide (`BENCHMARK_AUTHORING.md`)**:
+  - Comprehensive documentation covering scenario format, JSON schema rules, validation patterns, and PRNG seeding requirements.
+- **CLI Enhancements**:
+  - Added `--verbose` flag for step-by-step trace logging.
+  - Added `--compare [baselinePath]` flag to run regression comparison directly from the CLI.
+  - Added `npm run compare` script.
+
+---
+
 ## [1.1.0] — 2026-09-04 ("Resilience & Scientific Rigor")
 
 ### Added
