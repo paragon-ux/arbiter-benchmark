@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.1.0",
+  "tolerances": {
+    "ubuntu": {
+      "platform_pattern": "linux",
+      "latency_percent": 5,
+      "tokens_percent": 2,
+      "max_cv": 0.1
+    },
+    "macos": {
+      "platform_pattern": "darwin",
+      "latency_percent": 25,
+      "tokens_percent": 2,
+      "max_cv": 0.25
+    },
+    "windows": {
+      "platform_pattern": "win32",
+      "latency_percent": 20,
+      "tokens_percent": 2,
+      "max_cv": 0.2
+    }
+  }
+}

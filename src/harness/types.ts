@@ -1,4 +1,4 @@
-export type ExecutionTier = 'deterministic' | 'agy';
+export type ExecutionTier = 'deterministic' | 'subprocess_mcp' | 'agy';
 
 export interface BaseScenario {
   id: string;
@@ -25,12 +25,24 @@ export interface ScenarioMetrics {
   details: Record<string, unknown>;
 }
 
+export interface StatisticalMetrics {
+  trials: number;
+  medianDurationMs: number;
+  meanDurationMs: number;
+  stddevDurationMs: number;
+  p95DurationMs: number;
+  p99DurationMs: number;
+  cvDuration: number;
+  trialDurations: number[];
+}
+
 export interface ScenarioResult {
   scenarioId: string;
   title: string;
   tier: ExecutionTier;
   passed: boolean;
   metrics: ScenarioMetrics;
+  stats?: StatisticalMetrics;
   error?: string;
 }
 
@@ -39,6 +51,7 @@ export interface BenchmarkSummary {
   nodeVersion: string;
   platform: string;
   tier: ExecutionTier;
+  trials: number;
   totalScenarios: number;
   passedScenarios: number;
   failedScenarios: number;

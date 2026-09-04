@@ -13,6 +13,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   let scenarioId: string | undefined;
   let tier: ExecutionTier = 'deterministic';
+  let trials = 1;
   let emitJson = false;
 
   for (let i = 0; i < args.length; i++) {
@@ -20,7 +21,12 @@ async function main(): Promise<void> {
     if (arg === '--scenario' && args[i + 1]) {
       scenarioId = args[++i];
     } else if (arg === '--mode' && args[i + 1]) {
-      tier = args[++i] === 'agy' ? 'agy' : 'deterministic';
+      const m = args[++i];
+      if (m === 'agy') tier = 'agy';
+      else if (m === 'subprocess_mcp' || m === 'subprocess') tier = 'subprocess_mcp';
+      else tier = 'deterministic';
+    } else if (arg === '--trials' && args[i + 1]) {
+      trials = Math.max(1, parseInt(args[++i], 10) || 1);
     } else if (arg === '--json') {
       emitJson = true;
     } else if (arg === '--help' || arg === '-h') {
@@ -28,9 +34,10 @@ async function main(): Promise<void> {
 Usage: arbiter-benchmark [options]
 
 Options:
-  --all              Run all 7 benchmark scenarios
-  --scenario <id>    Run a specific scenario (e.g. 004-parallel-arbiter)
-  --mode <mode>      Execution tier: 'deterministic' (default) or 'agy'
+  --all              Run all benchmark scenarios
+  --scenario <id>    Run a specific scenario (e.g. 008-agent-semantic-correctness)
+  --mode <mode>      Execution tier: 'deterministic' (default), 'subprocess_mcp', or 'agy'
+  --trials <N>       Number of iterations to run for statistical aggregation (default: 1)
   --json             Output results in raw JSON format
   --help, -h         Show help text
 `);
@@ -47,7 +54,7 @@ Options:
     process.exit(1);
   }
 
-  const summary = await orchestrator.runSuite(scenarios, tier);
+  const summary = await orchestrator.runSuite(scenarios, tier, trials);
 
   // Write machine readable results
   const resultsDir = path.join(rootDir, 'results');

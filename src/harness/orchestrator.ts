@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { BaseScenario, BenchmarkSummary, ExecutionTier, ScenarioResult } from './types.js';
 import { DeterministicAdapter } from './adapters/deterministic.js';
+import { SubprocessMcpAdapter } from './adapters/subprocessMcp.js';
 import { AgyRunnerAdapter } from './adapters/agyRunner.js';
-import { estimateMemoryUsage } from './metrics.js';
+import { computeStatisticalMetrics, estimateMemoryUsage } from './metrics.js';
 
 export class BenchmarkOrchestrator {
   private deterministicAdapter = new DeterministicAdapter();
+  private subprocessMcpAdapter = new SubprocessMcpAdapter();
   private agyAdapter = new AgyRunnerAdapter();
 
   loadScenarios(scenariosDir: string, scenarioId?: string): BaseScenario[] {
@@ -24,18 +26,41 @@ export class BenchmarkOrchestrator {
     return scenarios;
   }
 
-  async runSuite(scenarios: BaseScenario[], tier: ExecutionTier = 'deterministic'): Promise<BenchmarkSummary> {
+  async runSuite(
+    scenarios: BaseScenario[],
+    tier: ExecutionTier = 'deterministic',
+    trials: number = 1
+  ): Promise<BenchmarkSummary> {
     const startTime = performance.now();
     const results: ScenarioResult[] = [];
 
     for (const scenario of scenarios) {
-      let result: ScenarioResult;
-      if (tier === 'agy') {
-        result = await this.agyAdapter.execute(scenario);
-      } else {
-        result = await this.deterministicAdapter.execute(scenario);
+      const trialDurations: number[] = [];
+      let finalResult: ScenarioResult | undefined;
+
+      for (let t = 0; t < trials; t++) {
+        let currentResult: ScenarioResult;
+        if (tier === 'agy') {
+          currentResult = await this.agyAdapter.execute(scenario);
+        } else if (tier === 'subprocess_mcp') {
+          currentResult = await this.subprocessMcpAdapter.execute(scenario);
+        } else {
+          currentResult = await this.deterministicAdapter.execute(scenario);
+        }
+
+        trialDurations.push(currentResult.metrics.durationMs);
+        if (!finalResult || (t === trials - 1)) {
+          finalResult = currentResult;
+        }
       }
-      results.push(result);
+
+      if (finalResult) {
+        if (trials > 1) {
+          finalResult.stats = computeStatisticalMetrics(trialDurations);
+          finalResult.metrics.durationMs = finalResult.stats.medianDurationMs;
+        }
+        results.push(finalResult);
+      }
     }
 
     const totalDuration = performance.now() - startTime;
@@ -57,6 +82,7 @@ export class BenchmarkOrchestrator {
       nodeVersion: process.version,
       platform: `${process.platform} (${process.arch})`,
       tier,
+      trials,
       totalScenarios: scenarios.length,
       passedScenarios: passedCount,
       failedScenarios: scenarios.length - passedCount,

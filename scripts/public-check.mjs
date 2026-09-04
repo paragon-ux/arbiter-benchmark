@@ -16,6 +16,8 @@ const checks = [
   { name: "local-path", pattern: /(?:^|[\s"'`])(?:[A-Za-z]:[\\/]+Users[\\/]+|\\\\[^\s"'`]+|\/(?:Users|home)\/)[^\s"'`]+/iu },
 ];
 
+const externalDepPattern = /(?:import\s+(?:[\w*\s{},]*from\s+)?|require\(\s*)['"](?!node:|[./\\])([^'"]+)['"]/u;
+
 const findings = [];
 for (const relative of files) {
   if (relative === "scripts/public-check.mjs") continue;
@@ -30,6 +32,24 @@ for (const relative of files) {
   for (const check of checks) {
     if (check.pattern.test(text)) {
       findings.push({ file: relative.replaceAll("\\", "/"), check: check.name });
+    }
+  }
+
+  // Zero-runtime-dependency enforcement on source code
+  if (relative.startsWith("src/") && (relative.endsWith(".ts") || relative.endsWith(".js"))) {
+    const lines = text.split("\n");
+    for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+      const line = lines[lineNum];
+      if (line.trim().startsWith("//") || line.trim().startsWith("*")) continue;
+      const match = externalDepPattern.exec(line);
+      if (match) {
+        findings.push({
+          file: relative.replaceAll("\\", "/"),
+          line: lineNum + 1,
+          check: "external-runtime-dependency-violation",
+          module: match[1]
+        });
+      }
     }
   }
 }

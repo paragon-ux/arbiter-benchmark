@@ -30,7 +30,7 @@ This repository is part of an integrated, local-first multi-agent execution suit
 
 ## Architecture & Scenarios
 
-The suite evaluates 7 standardized benchmark scenarios:
+The suite evaluates 14 standardized benchmark and resilience scenarios:
 
 1. `001-single-agent-cold`: Baseline cold exploration after context compaction (~7,120 tokens).
 2. `002-single-agent-waymark`: In-flight continuity resume (<216 tokens, >75% token reduction).
@@ -39,10 +39,18 @@ The suite evaluates 7 standardized benchmark scenarios:
 5. `005-dag-dependencies`: 12-task dependency DAG resolved via Kahn topological sort.
 6. `006-conflict-quarantine`: Overlapping edits triggering fail-closed rollback and quarantine.
 7. `007-watchdog-dead-worker`: Dead worker PID detection via `process.kill(pid, 0)` and lease reclamation.
+8. `008-agent-semantic-correctness`: AST validation of agent-generated code against strict syntax/type schemas.
+9. `009-parallel-10-workers`: Stress scale testing 10 concurrent agent workers across isolated worktrees.
+10. `010-cyclic-dag-rejection`: Verification of immediate cycle detection and rejection in task dependency graphs.
+11. `011-concurrent-lease-collision`: High-contention race condition testing for task lease acquisition atomicity.
+12. `012-signal-interrupted-merge`: Mid-merge SIGINT/SIGTERM interruption testing clean rollback to pristine state.
+13. `013-waymark-multi-compaction`: Durability of Waymark in-flight continuity across 5 successive compactions.
+14. `014-disk-full-recovery`: Graceful degradation and atomic rollback when storage limits or ENOSPC errors occur.
 
-## Dual-Tier Execution Engine
+## Tri-Tier Execution Engine
 
-- **Tier 1 (Deterministic Replay Engine)**: Fast, seeded replay simulation with pre-recorded I/O fixtures ($0 cost, runs on GitHub Actions CI across Ubuntu, macOS, Windows in <5ms).
+- **Tier 1 (Deterministic Replay Engine)**: Fast, seeded replay simulation via Mulberry32 PRNG with pre-recorded I/O fixtures ($0 cost, runs on GitHub Actions CI across Ubuntu, macOS, Windows in <5ms).
+- **Tier 1.5 (Subprocess MCP Adapter)**: Spawns real OS child processes communicating via JSON-RPC 2.0 stdio with mock MCP tool contracts, validating transport boundaries without external API keys.
 - **Tier 2 (Live Agy Runner)**: Invokes the local Antigravity CLI (`agy`) across isolated worktrees using user subscription ($0 API cost) for live empirical validation.
 
 ## Agent Workflow & Commands

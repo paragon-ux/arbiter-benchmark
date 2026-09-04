@@ -32,11 +32,18 @@ If an agent crashes (due to timeout, out-of-memory, network disconnect, or IDE w
 
 | Hypothesis | Independent Variable | Controlled Conditions | Measured Metric | Expected Result |
 | :--- | :--- | :--- | :--- | :--- |
-| **H1: In-Flight Continuity** | Continuity Mechanism (Cold Re-read vs. Waymark Trajectory) | Identical compaction trigger, same target codebase | Tokens consumed to resume, exploration hops | $ge 75%$ token reduction with Waymark (<216 tokens) |
+| **H1: In-Flight Continuity** | Continuity Mechanism (Cold Re-read vs. Waymark Trajectory) | Identical compaction trigger, same target codebase | Tokens consumed to resume, exploration hops | $\ge 75\%$ token reduction with Waymark (<216 tokens) |
 | **H2: Worktree Isolation** | Isolation Strategy (Shared Working Copy vs. Ephemeral Worktrees) | 3 concurrent agents editing related modules | Working copy cleanliness, test pass rate | 100% test pass rate in isolated worktrees vs. dirty failures in shared copy |
 | **H3: DAG Scheduling** | Task Dispatcher (Linear vs. Kahn Topological Sort) | 12-task dependency graph with critical path | Task dispatch latency, ordering violations | Zero ordering violations; $<5\text{ms}$ dispatch latency |
 | **H4: Fail-Closed Quarantine** | Merge Protocol (Direct Merge vs. Sequential Quarantine) | Intentionally conflicting edits across 2 tasks | Integrity of `main`, rollback cleanly executed | `main` remains 100% pristine; conflicted worktree quarantined in `CONFLICT` |
 | **H5: Zero-Daemon Watchdog** | Lease Reclaim (Passive timeout vs. Active OS Signal `kill(pid,0)`) | Killed agent process with active lease | Lease reclamation latency, orphan avoidance | Lease reclaimed in $<5\text{ms}$; task reset to `READY` |
+| **H6: Semantic Correctness** | Code Generation Protocol (Unguided vs. Strict AST Schema) | Syntax & interface mutation tasks | AST schema validity, test pass rate | 100% valid AST nodes, zero syntax regressions |
+| **H7: Worktree Scalability** | Worker Concurrency (3 vs. 10 Concurrent Worktrees) | High-concurrency parallel tasks | Worktree isolation integrity, resource overhead | Zero cross-worktree bleed across 10 concurrent workers |
+| **H8: Cycle Detection** | Dependency Validation (Unchecked vs. DFS Cycle Rejection) | Cyclic dependency graph ($A \to B \to C \to A$) | Cycle rejection latency, graph corruption | Immediate cycle rejection with cycle path diagnostics |
+| **H9: Lease Atomicity** | Concurrency Control (Naive read-check vs. SQLite `BEGIN IMMEDIATE`) | High-contention race on single ready task | Duplicate lease count, lease collisions | Exactly 1 worker wins lease; 0 duplicate claims |
+| **H10: Signal Recovery** | Interruption Resilience (Standard merge vs. Atomic transaction) | Mid-merge SIGINT/SIGTERM interruption | Dirty worktree state, working tree cleanliness | 100% clean rollback to pristine base state |
+| **H11: Multi-Compaction** | Trajectory Durability (Single checkpoint vs. Rolling Ledger) | 5 sequential context compactions | Final trajectory continuity, breadcrumb drift | Preserves unbroken lineage across all 5 compactions |
+| **H12: Disk-Full Handling** | Storage Exhaustion Resilience (Unchecked write vs. Atomic check) | Simulated `ENOSPC` / storage exhaustion | Database corruption, task rollback status | Graceful rollback, task remains recoverable |
 
 ---
 
@@ -58,9 +65,9 @@ Arbiter Benchmark includes two self-contained, realistic TypeScript codebases:
 
 ---
 
-## 5. Dual-Tier Execution Engine
+## 5. Tri-Tier Execution Engine
 
-Scientific evaluation requires both **deterministic repeatability** for continuous integration and **empirical realism** for live LLM agent validation.
+Scientific evaluation requires **deterministic repeatability** for continuous integration, **subprocess protocol fidelity** without API overhead, and **empirical realism** for live LLM agent validation.
 
 ```
                      +-----------------------------------+
@@ -68,23 +75,28 @@ Scientific evaluation requires both **deterministic repeatability** for continuo
                      +-----------------+-----------------+
                                        |
                      +-----------------+-----------------+
-                     |                                   |
-                     v                                   v
-       +---------------------------+       +---------------------------+
-       |   Tier 1: Deterministic   |       |      Tier 2: Live Agy     |
-       |     Simulation Engine     |       |       Runner Engine       |
-       +-------------+-------------+       +-------------+-------------+
-                     |                                   |
-             Seeded Replay &                     Local Antigravity CLI
-            Pre-recorded I/O                     Across Real Worktrees
-          (0 cost, CI Matrix)                     ($0 User Subscription)
+                     |                 |                 |
+                     v                 v                 v
+        +------------------+  +------------------+  +------------------+
+        | Tier 1: Determin.|  | Tier 1.5: Subpr. |  | Tier 2: Live     |
+        | Replay Engine    |  | MCP Adapter      |  | Agy Runner       |
+        +--------+---------+  +--------+---------+  +--------+---------+
+                 |                     |                     |
+         Seeded Mulberry32     OS Child Processes    Local Antigravity
+          PRNG Replay I/O      JSON-RPC 2.0 Stdio    CLI Over Worktrees
+         (0 cost, CI Matrix)   (0 external keys)     ($0 Subscription)
 ```
 
 ### Tier 1: Deterministic Simulator
-- Seeded pseudo-random generator (`node:crypto`).
+- Seeded pseudo-random generator (Mulberry32 with seed `0x6D2B79F5`).
 - Pre-recorded tool call traces and AST mutation fixtures.
-- Sub-5 millisecond execution time across all 7 scenarios.
+- Sub-5 millisecond execution time across all 14 scenarios.
 - Zero external API dependencies; runs seamlessly on Linux, macOS, and Windows CI.
+
+### Tier 1.5: Subprocess MCP Adapter
+- Spawns real OS child processes communicating via JSON-RPC 2.0 `stdio`.
+- Validates protocol boundaries, payload serialization, and transport failure modes.
+- Zero external API keys or token costs.
 
 ### Tier 2: Live Agy Runner
 - Spawns real agent processes using the local Antigravity CLI (`agy`).
@@ -99,3 +111,4 @@ The empirical findings from Arbiter Benchmark confirm:
 1. **Token Conservation**: Waymark trajectories preserve AST context in <216 tokens, saving **>75%** of tokens compared to cold re-reads.
 2. **Deterministic Isolation**: Ephemeral Git worktrees prevent 100% of concurrent file collisions without the resource overhead of Docker or VMs.
 3. **Sub-Millisecond Coordination**: Native SQLite in-memory and WAL-mode scheduling executes DAG dependency resolution and watchdog lease reclamation in **<5ms**.
+4. **Resilience Under Chaos**: Atomic transactions and fail-closed rollback maintain pristine working copy status even during mid-merge signal aborts, disk exhaustion, and cyclic dependency injection.
