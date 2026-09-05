@@ -1,15 +1,19 @@
 # Arbiter Benchmark: Multi-Agent Orchestration & Continuity Testbed
 
-> **Empirical Multi-Agent Benchmark:** Scientifically validates multi-agent workspace orchestration across isolated Git worktrees. Validates **>75% token reduction** via Waymark in-flight continuity (<216 tokens vs. ~7,120 cold re-read), **100% isolation fidelity** with zero dirty state on `main`, sub-millisecond DAG scheduling, **<5ms** zero-daemon dead-worker lease recovery, and fail-closed chaos recovery across 14 scenarios. (Reproduce locally via `npm run benchmark`).
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](package.json)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](package.json)
+[![Zero Runtime Dependencies](https://img.shields.io/badge/dependencies-0-success.svg)](package.json)
+
+> **Empirical Multi-Agent Benchmark:** Scientifically validates multi-agent workspace orchestration across isolated Git worktrees. Validates **>75% token reduction** via Waymark in-flight continuity (<216 tokens vs. ~7,120 cold re-read), **100% isolation fidelity** with zero dirty state on `main`, sub-millisecond DAG scheduling, **<5ms** zero-daemon dead-worker lease recovery, and fail-closed chaos recovery across 18 scenarios. (Reproduce locally via `npm run benchmark`).
 
 ---
 
 ## Table of Contents
 
-- [Empirical Results Summary (v1.1.0)](#empirical-results-summary-v110)
+- [Empirical Results Summary (v2.1.0)](#empirical-results-summary-v210)
 - [Cross-Repository Ecosystem](#cross-repository-ecosystem)
 - [Why Benchmark Multi-Agent Orchestration?](#why-benchmark-multi-agent-orchestration)
-- [The 14 Benchmark Scenarios](#the-14-benchmark-scenarios)
 - [Three-Tier Execution Architecture](#three-tier-execution-architecture)
 - [Statistical Multi-Trial Engine](#statistical-multi-trial-engine)
 - [Realistic Target Codebases](#realistic-target-codebases)
@@ -19,7 +23,7 @@
 
 ---
 
-## Empirical Results Summary (v2.0.0)
+## Empirical Results Summary (v2.1.0)
 
 Benchmarked on **Node 22 LTS** across 10 trials ($N = 10$) with statistical variance reporting:
 
@@ -38,7 +42,7 @@ Benchmarked on **Node 22 LTS** across 10 trials ($N = 10$) with statistical vari
 | **`011-concurrent-lease-collision`**| Atomic CAS Lease & EAGAIN | ~0.1 | ~0.2 | ~0.03 | N/A | 0 | **100%** | ✅ PASS |
 | **`012-signal-interrupted-merge`** | `SIGTERM` Fail-Closed Rollback | ~0.1 | ~0.1 | ~0.02 | N/A | 1 (1 resolved) | **98%** | ✅ PASS |
 | **`013-waymark-multi-compaction`** | 3-Cycle Trajectory Stability | ~0.1 | ~0.2 | ~0.03 | 1,300 | 0 | **99%** | ✅ PASS |
-| **`014-disk-full-recovery`** | `ENOSPC` Transaction Rollback| ~0.1 | ~0.1 | ~0.02 | N/A | 0 | **100%** | ✅ PASS |
+| **`014-disk-full-recovery`** | SQLite Transaction Rollback Recovery | ~0.1 | ~0.1 | ~0.02 | N/A | 0 | **100%** | ✅ PASS |
 | **`015-docker-isolated-overhead`** | Docker Container Overhead | ~0.1 | ~0.2 | ~0.02 | 2,100 | 0 | **98%** | ✅ PASS |
 | **`016-naive-mutex-contention`** | Naive Mutex Contention | ~0.1 | ~0.2 | ~0.03 | 2,500 | 2 (0 resolved) | 45% | ✅ PASS |
 | **`017-parallel-50-workers`** | 50-Worker Scale Concurrency | ~0.1 | ~0.2 | ~0.03 | 34,000 | 0 | **98%** | ✅ PASS |
