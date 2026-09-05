@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] — 2026-09-05 ("Remediation & Anti-Regression Hardening")
+
+### Added
+- **Sub-Millisecond Jitter Floor (`scripts/compare-baseline.mjs`)**:
+  - Implemented `minAbsoluteDeltaMs = 5.0` jitter buffer in baseline comparator to prevent false positive latency regressions on micro-benchmarks (<0.5ms execution) caused by Node.js thread and process scheduler jitter.
+
+### Changed
+- Synchronized scenario 014 title across all test metadata and schemas to `"SQLite Transaction Rollback Recovery"`.
+- Bumped package version to `2.1.0` aligned across the Arbiter ecosystem.
+
+---
+
 ## [2.0.0] — 2026-09-04 ("Competitive & Comparative Analysis")
 
 ### Added

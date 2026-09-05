@@ -1,6 +1,6 @@
 {
   "name": "arbiter-benchmark",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Instrumented benchmark suite scientifically validating Arbiter multi-agent orchestration, Waymark continuity, and fail-closed conflict quarantine.",
   "type": "module",

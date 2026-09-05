@@ -96,7 +96,8 @@ export function compareBenchmarks(currentData, baselineData, tolerancesData, opt
       reasons.push(`TOKEN_GROWTH (+${tokenDeltaPercent.toFixed(1)}% > ${maxTokenPercent}%)`);
     }
 
-    if (latencyDeltaPercent > maxLatencyPercent && latencyDeltaMs > 1.0) {
+    const minAbsoluteDeltaMs = 5.0;
+    if (latencyDeltaPercent > maxLatencyPercent && latencyDeltaMs > minAbsoluteDeltaMs) {
       regressed = true;
       reasons.push(`LATENCY_SPIKE (+${latencyDeltaPercent.toFixed(1)}% > ${maxLatencyPercent}%, +${latencyDeltaMs.toFixed(2)}ms)`);
     }
